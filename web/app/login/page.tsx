@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { loginApi } from '@/lib/services/login.api';
+import { SESSION_TOKEN_KEY } from '@/lib/services/base.api';
 
 export default function LoginPage() {
   const router = useRouter()
@@ -20,26 +21,26 @@ export default function LoginPage() {
   const [vaultOpening, setVaultOpening] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [loginError, setLoginError] = useState('')
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    // setIsLoading(true)
-    const res = await loginApi({ email, password })
-    console.log(res)
-    //NEED TO CLEAN UP ONCE ALL DONE, didn't get time due to mongodb connection issue.
-    // Simulate authentication delay
-    // await new Promise(resolve => setTimeout(resolve, 1000))
-
-    // Trigger vault door animation
-    // setVaultOpening(true)
-
-    // Navigate after animation
-    // await new Promise(resolve => setTimeout(resolve, 1000))
-    // router.push('/dashboard')
-    if(res.data) {
-      router.push('/dashbaord')
-    } else {
-      alert('Something went wrong')
+    if (isLoading) return
+    setLoginError('')
+    setIsLoading(true)
+    try {
+      sessionStorage.removeItem(SESSION_TOKEN_KEY)
+      const result = await loginApi({ email, password })
+      if (!result.success) {
+        setLoginError(result.message)
+        return
+      }
+      sessionStorage.setItem(SESSION_TOKEN_KEY, result.token)
+      router.push('/dashboard')
+    } catch {
+      setLoginError('Unable to complete sign in. Please check that session storage is available and try again.')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -207,7 +208,8 @@ export default function LoginPage() {
 
             {/* Email Tab */}
             <TabsContent value="email">
-              <form onSubmit={handleLogin} className="space-y-4">
+              <form onSubmit={handleLogin} className="space-y-4" aria-busy={isLoading}>
+                <div role="alert" className="text-sm text-red-400">{loginError}</div>
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-[#C0C0C0]">Email</Label>
                   <div className="relative">

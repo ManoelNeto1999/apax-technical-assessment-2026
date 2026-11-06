@@ -19,7 +19,15 @@ const sendToken = (user: IUser, statusCode: number, res: Response) => {
 
   res.status(statusCode).cookie("token", token, options).json({
     success: true,
-    user,
+    user: {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      gender: user.gender,
+      avatar: user.avatar,
+      role: user.role,
+      createdAt: user.createdAt,
+    },
     token,
   });
 };

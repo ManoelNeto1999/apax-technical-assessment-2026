@@ -82,6 +82,16 @@ userSchema.pre<IUser>("save", async function (next) {
 });
 
 
+/** Sign a short-lived token using the same secret as authentication. */
+userSchema.methods.getJWTToken = function (this: IUser): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error("JWT_SECRET is required to sign tokens");
+  return jwt.sign({ id: String(this._id), email: this.email }, secret, {
+    algorithm: "HS256",
+    expiresIn: 60 * 60,
+  });
+};
+
 /**
  * Compare password
  */

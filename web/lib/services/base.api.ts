@@ -1,49 +1,56 @@
-const baseUrl =
-  process.env.NODE_ENV === 'production'
-    ? ''
-    : 'http://localhost:4000';
+const baseUrl = (
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:4000')
+).replace(/\/$/, '');
 
-export interface ApiResponse {
-  success: boolean;
-  message: string;
-  data?: any;
+export const SESSION_TOKEN_KEY = 'apax.jwt';
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+export type ApiResponse =
+  | { success: true; payload: Record<string, unknown> }
+  | { success: false; message: string };
+
+// Use only for requests to the trusted API origin. Never log these headers.
+export function withAuthorization(headers: HeadersInit = {}): Headers {
+  const result = new Headers(headers);
+  const token = sessionStorage.getItem(SESSION_TOKEN_KEY);
+  if (token) result.set('Authorization', `Bearer ${token}`);
+  return result;
 }
 
-export const baseAPI = async (url: string, method: any, body?: unknown) => {
+export const baseAPI = async (
+  path: string,
+  method: HttpMethod,
+  body?: unknown,
+  headers: HeadersInit = {},
+): Promise<ApiResponse> => {
   try {
-    const res = await fetch(`${baseUrl}/user${url}`, {
+    const requestHeaders = new Headers(headers);
+    requestHeaders.set('Content-Type', 'application/json');
+    const res = await fetch(`${baseUrl}${path}`, {
       method,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: method !== 'GET' && body ? JSON.stringify(body) : undefined,
+      headers: requestHeaders,
+      body: method !== 'GET' && body !== undefined ? JSON.stringify(body) : undefined,
     });
-
-    const text = await res.text();
-    let data: unknown;
-
+    let payload: unknown;
     try {
-      data = text ? JSON.parse(text) : null;
+      payload = await res.json();
     } catch {
-      throw new Error('Invalid JSON response from server');
+      return { success: false, message: `Invalid JSON response from server (HTTP ${res.status})` };
     }
-
-    const responseData = data as Partial<ApiResponse> | null;
-
-    if (!res.ok) {
-      throw new Error(responseData?.message || `Request failed with status ${res.status}`);
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      return { success: false, message: 'Invalid API response' };
     }
-    return {
-      success: true,
-      message: responseData?.message ?? 'Request successful',
-      data: responseData?.data ?? responseData,
-    };
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Something went wrong';
-
-    return {
-      success: false,
-      message,
-    };
+    const data = payload as Record<string, unknown>;
+    if (!res.ok || data.success !== true) {
+      return {
+        success: false,
+        message: typeof data.message === 'string' && data.message.trim()
+          ? data.message
+          : `Request failed (HTTP ${res.status})`,
+      };
+    }
+    return { success: true, payload: data };
+  } catch {
+    return { success: false, message: 'Unable to reach the API. Please try again.' };
   }
 };
