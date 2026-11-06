@@ -27,7 +27,7 @@ JSON 401 responses. `src/utils/sendToken.ts` returns an explicit public user fie
 allowlist because login selects the password hash; passwords and reset secrets
 must not be serialized.
 
-## Task B: proposed integration, not implemented
+## Frontend Task B: proposed integration, not implemented
 
 1. Define separate wire DTOs and runtime guards near `lib/services/` before
    updating React state. `src/types/api.ts` currently defines `Deposit` and
@@ -64,7 +64,8 @@ must not be serialized.
 Holdings, prices, price/audit timers in `app/dashboard/page.tsx`, vault reserves,
 audit logs, daily change, dashboard identity/network ticker, wallet connection,
 and other certification/redemption/Zakat demo behavior remain as supplied.
-No blockchain code or Task B integration was changed.
+No blockchain code or frontend Task B integration was changed. The backend
+holdings endpoint below now supplies grams; APX-i and prices remain separate future contracts.
 
 ## Security and deployment
 
@@ -103,6 +104,79 @@ require that different request-security model. Do not add credentialed wildcard 
 
 Only static source review was performed. Per instruction, no dependency commands,
 builds, tests, app, backend, or database were run. Live integration is unverified.
-`src/index.ts` does not currently call the connection helper in
-`src/config/database.ts`; database startup/configuration remains an external
-integration prerequisite and was not changed in this minimal JWT task.
+Backend startup now awaits the Mongo connection as described below.
+
+
+## Backend Task B: implemented holdings endpoint
+
+`GET /api/holdings` uses the existing JWT middleware before any holdings query.
+Static route review: the only ownership filter is `{ user: req.user._id }`, where
+middleware resolves the user from a verified HS256 JWT. No query/body user ID is
+read. Missing/malformed/wrong-signature/expired tokens return JSON 401 before any
+Mongo access; a valid token for a deleted user requires a user lookup then returns
+401. Missing JWT_SECRET is a server configuration error (500), not a bad-token case.
+The existing `/user/login`, token generation, Bearer/cookie behavior, and frontend
+source are preserved. Holdings responses include `Cache-Control: no-store`.
+
+`src/models/holdingsModel.ts` defines required user ObjectId, asset enum
+GOLD/SILVER/PLATINUM, finite nonnegative Decimal128 amount in grams, automatic
+updatedAt, and a unique compound user+asset index. Provision/verify that index
+before serving production data; Mongoose `unique` is an index declaration, not a
+validator. Existing duplicates must be reconciled before index creation. Future
+writers must construct Decimal128 from decimal strings (up to 34 significant
+digits), use validation on query updates, and maintain timestamps; direct database
+writes bypass Mongoose validation. There is no write endpoint in this task.
+
+The wire type is `HoldingsResponse` in `src/services/holdings.ts`: exactly gold,
+silver, platinum, each `{ amountGrams: string, updatedAt: string | null }`.
+Decimal128.toString() is serialized directly, preserving decimal precision and
+potential exponent notation; never coerce these quantities through JS Number for
+accounting. Timestamps are ISO UTC strings; missing rows use "0" and null (unknown
+update time, not a fabricated timestamp). Example synthetic response:
+
+```json
+{
+  "gold": { "amountGrams": "12.3400", "updatedAt": "2026-01-01T00:00:00.000Z" },
+  "silver": { "amountGrams": "0", "updatedAt": null },
+  "platinum": { "amountGrams": "0", "updatedAt": null }
+}
+```
+
+This supersedes the proposed numeric holdings DTO above: frontend runtime guards
+must validate nonnegative decimal strings (including exponent notation) and nullable
+ISO timestamps. This endpoint supplies no APX-i balance, valuation, activity,
+prices, blockchain reserves, or proof of custody. The legacy `/balance` and
+`/activity` routes still expose shared demo fixtures; do not use them as live data.
+
+Startup now requires server-only MONGO_URI and awaits mongoose.connect before
+listening, with no deprecated options. Missing URI produces a clear error and no
+listener; connection failure logs a generic error without URI/driver details.
+JWT_SECRET must also be provided securely for login/authentication. No actual
+credentials are supplied. dotenv loads a root environment file by default; the
+config directory example is not automatically loaded. A frontend-only demo can
+be launched independently with the existing Next binary (`node_modules/.bin/next dev`)
+without starting src/index.ts; the combined dev script expects backend configuration.
+No commands were executed to verify startup. Existing CORS remains unchanged;
+restrict it to configured frontend origins before deployment. Consider helmet,
+login rate limiting, request size limits, and cookie/CSRF hardening separately;
+no dependencies were added. This is review code, not audited financial infrastructure.
+
+### Holdings checklist (not executed)
+
+- Valid JWT: check all three keys, decimal strings and ISO timestamps; no holdings
+  returns three zero amounts with null timestamps; partial holdings retain defaults.
+- Missing, malformed, expired and wrong-signature JWT: JSON 401 and zero Mongo
+  calls (instrument both User and Holding methods). An invalid Authorization header
+  must not fall back to a valid cookie. Deleted-user token: 401, no holdings query.
+- With two synthetic users, authenticate as one and add the other's ID through
+  query parameters/body: only authenticated-user rows return, with no user IDs.
+- Verify duplicate user+asset insertion fails after index creation; negative,
+  NaN/infinite amounts and invalid assets fail Mongoose validation.
+- Check DB failure returns generic JSON 500 without URI, JWT, or driver details.
+- Check missing URI and failed connection never open the backend listener;
+  frontend demo remains independently inspectable. Recheck `/user/login` behavior.
+- Pure tests added in `src/services/holdings.test.ts` cover all assets, empty and
+  partial defaults, Decimal128 precision/exponents and timestamp/JSON conversion.
+  Intended later command with installed dependencies: `node --import tsx --test src/services/holdings.test.ts`.
+  These tests do not connect Mongo. No tests, typecheck, build, app, or database
+  commands were run in this pass; route isolation is static review only.
