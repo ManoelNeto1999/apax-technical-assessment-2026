@@ -1,6 +1,6 @@
 # Proposed Foundry / Hardhat tests — NOT RUN
 
-Pseudocode only. No compiler, tests, scripts or deployments were run; no passing results are claimed. In a separately authorized environment, pin Solidity and OpenZeppelin 5.x, compile the actual imports and translate these cases into executable tests.
+The Foundry/Hardhat cases below remain pseudocode and have not been run as that suite. Separately, Solidity compilation and 14/14 local Ganache/EVM smoke checks **were** completed; see [offline results](OFFLINE_BEHAVIOR_RESULTS.md). No real deployments or external custody tests were run. For the full suite, pin Solidity/OpenZeppelin 5.x and turn the cases below into executable integration/fuzz tests.
 
 Fixture: distinct deployer, admin, compliance, minter, pauser, redeemer, holder, recipient and attacker. Deploy with admin; grant each operational role explicitly. Verify holder, recipient and redeemer through compliance. Use fresh nonzero bytes32 IDs and amounts in base units.
 

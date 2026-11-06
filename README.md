@@ -31,8 +31,9 @@ Using a disposable Ubuntu 24.04 VM without network access and without active Cod
 - Node test suite for holdings serialization and unauthorized requests: **4/4 PASS**.
 - Local HTTP checks for missing, wrong-scheme, and invalid JWT: **401 JSON**, as expected.
 - Solidity 0.8.24 + OpenZeppelin Contracts 5.3.0: **APXGold.sol compiled successfully**.
+- Offline Ganache 7.9.2 + ethers 6 local EVM smoke checks: **14/14 PASS** (roles, KYC, pause, mint/burn, replay). See [results](web/contracts/OFFLINE_BEHAVIOR_RESULTS.md).
 
-Not run/verified: real MongoDB-connected login, authenticated holdings query against a seeded database, end-to-end Next.js login in browser, on-chain mint/burn/blocked-transfer tests, actual KYC or custody service, contract deployment. The Next.js production build was blocked by Google Fonts downloads in the network-disabled VM (Geist Mono, Inter, Playfair Display); TypeScript and changed-source lint passed. Do not represent this as a completed production build.
+Not run/verified: real MongoDB-connected login, authenticated holdings query against a seeded database, end-to-end Next.js login in browser, full Foundry/Hardhat test plan and property tests, real chain/testnet deployment, actual KYC or custody service, contract deployment. The Next.js production build was blocked by Google Fonts downloads in the network-disabled VM (Geist Mono, Inter, Playfair Display); TypeScript and changed-source lint passed. Do not represent this as a completed production build.
 
 ## Running tests in a reviewed environment
 
