@@ -1,0 +1,11 @@
+node_modules/
+.next/
+.env
+.env.*
+.config.env
+.npmrc
+.aws/
+.codex/
+.agents/
+tsconfig.tsbuildinfo
+*.log
