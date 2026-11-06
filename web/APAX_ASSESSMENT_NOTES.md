@@ -180,3 +180,8 @@ no dependencies were added. This is review code, not audited financial infrastru
   Intended later command with installed dependencies: `node --import tsx --test src/services/holdings.test.ts`.
   These tests do not connect Mongo. No tests, typecheck, build, app, or database
   commands were run in this pass; route isolation is static review only.
+
+## Offline verification completed (2026-11-06)
+
+The review VM ran TypeScript checks and ESLint for changed TypeScript files: both passed.
+All four committed Node tests passed: three holdings serializer tests, and a HTTP 401 test covering missing, incorrect-scheme, and invalid bearer JWT. Solidity APXGold compiled with solc 0.8.24 and OpenZeppelin 5.3.0 in a separate toolchain. Contract behavioral tests in the Foundry/Hardhat plan, MongoDB integration and real frontend login were not run. A Next.js build failed to download three Google Fonts while deliberately offline; it has not been marked passing.
