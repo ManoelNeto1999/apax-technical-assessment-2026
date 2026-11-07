@@ -1,22 +1,9 @@
 import React from "react"
 import type { Metadata, Viewport } from 'next'
-import { Inter, Playfair_Display, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import './start'
 
-const _inter = Inter({
-  subsets: ["latin"],
-  variable: '--font-inter'
-});
-const _playfair = Playfair_Display({
-  subsets: ["latin"],
-  variable: '--font-playfair'
-});
-const _geistMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: '--font-geist-mono'
-});
 
 export const metadata: Metadata = {
   title: 'APAX - The Precious Metal Token Vault',
