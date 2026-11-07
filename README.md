@@ -33,7 +33,7 @@ Using a disposable Ubuntu 24.04 VM without network access and without active Cod
 - Solidity 0.8.24 + OpenZeppelin Contracts 5.3.0: **APXGold.sol compiled successfully**.
 - Offline Ganache 7.9.2 + ethers 6 local EVM smoke checks: **14/14 PASS** (roles, KYC, pause, mint/burn, replay). See [results](web/contracts/OFFLINE_BEHAVIOR_RESULTS.md).
 
-Not run/verified: real MongoDB-connected login, authenticated holdings query against a seeded database, end-to-end Next.js login in browser, full Foundry/Hardhat test plan and property tests, real chain/testnet deployment, actual KYC or custody service, contract deployment. The Next.js production build was blocked by Google Fonts downloads in the network-disabled VM (Geist Mono, Inter, Playfair Display); TypeScript and changed-source lint passed. Do not represent this as a completed production build.
+**Full-stack integration verified (2026-11-06):** Next.js 16.4.3 production build PASSED offline after removing unused Google Fonts declarations. GET /login and GET /dashboard both returned HTTP 200. MongoDB Community 8.0.34 with two synthetic users and independent holdings passed 11/11 real HTTP checks for JWT login, wrong passwords, private user data, malformed tokens, and cross-user isolation. [See the integration validation report](web/INTEGRATION_VALIDATION.md). Not verified: interactive browser login/redirect, real deployment, full Foundry/Hardhat property tests, live vault/custody or KYC, or production security certification.
 
 ## Running tests in a reviewed environment
 
